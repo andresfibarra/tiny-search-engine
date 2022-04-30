@@ -1,0 +1,77 @@
+#!/bin/bash
+# Testing script for indexer.h
+# Run in make test as bash -v testing.sh &> testing.out
+# Andres Ibarra, Winter 2022
+
+########### INVALID ARGUMENTS ############
+# No arguments
+./indexer
+./indexer: usage: indexer pageDirectory indexFilename
+
+# One argument 
+./indexer ../data/letters10
+./indexer: usage: indexer pageDirectory indexFilename
+
+# Three or more arguments 
+./indexer ../data/letters10 ../data/indexLetters10 extraArg
+./indexer: usage: indexer pageDirectory indexFilename
+
+# invalid pageDirectory (non-existent path) 
+./indexer ../data/fakeDir ../data/indexLetters10
+./indexer: ../data/fakeDir not a directory created by crawler
+
+# invalid pageDirectory (not a crawler directory)
+./indexer ../data/fakeDir ../data/indexLetters10
+./indexer: ../data/fakeDir not a directory created by crawler
+
+# invalid indexFile (non-existent path) 
+./indexer ../data/letters10 ../data/newFile
+
+# invalid indexFile (read-only directory) 
+./indexer ../data/letters10 ../data/letters0
+./indexer: ../data/letters0 not a writeable file
+
+# invalid indexFile (existing, read-only file) 
+./indexer ../data/letters10 ../data/readOnlyFile
+./indexer: ../data/readOnlyFile not a writeable file
+
+########### VALID ARGUMENTS ############
+# Valid arguments; no valgrind
+./indexer ../data/letters10 ../data/indexLetters10
+
+# Valid arguments with valgrind
+valgrind --leak-check=full --show-leak-kinds=all ./indexer ../data/wikipedia1 ../data/indexWikipedia1
+==1332== Memcheck, a memory error detector
+==1332== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
+==1332== Using Valgrind-3.13.0 and LibVEX; rerun with -h for copyright info
+==1332== Command: ./indexer ../data/wikipedia1 ../data/indexWikipedia1
+==1332== 
+==1332== 
+==1332== HEAP SUMMARY:
+==1332==     in use at exit: 0 bytes in 0 blocks
+==1332==   total heap usage: 1,572,492 allocs, 1,572,492 frees, 234,199,324,091 bytes allocated
+==1332== 
+==1332== All heap blocks were freed -- no leaks are possible
+==1332== 
+==1332== For counts of detected and suppressed errors, rerun with: -v
+==1332== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
+
+# Use indexTest; no valgrind
+./indexTest ../data/indexWikipedia1 ../data/newIndexWikipedia1
+
+# indexTest; with valgrind
+valgrind --leak-check=full --show-leak-kinds=all ./indexTest ../data/indexLetters10 ../data/newIndexLetters10
+==8185== Memcheck, a memory error detector
+==8185== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
+==8185== Using Valgrind-3.13.0 and LibVEX; rerun with -h for copyright info
+==8185== Command: ./indexTest ../data/indexLetters10 ../data/newIndexLetters10
+==8185== 
+==8185== 
+==8185== HEAP SUMMARY:
+==8185==     in use at exit: 0 bytes in 0 blocks
+==8185==   total heap usage: 182 allocs, 182 frees, 21,629 bytes allocated
+==8185== 
+==8185== All heap blocks were freed -- no leaks are possible
+==8185== 
+==8185== For counts of detected and suppressed errors, rerun with: -v
+==8185== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)

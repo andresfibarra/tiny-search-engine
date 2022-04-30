@@ -1,0 +1,14 @@
+applicants or pro: 4 2
+pro or applicants: 4 2
+
+depth or wasted or miss: 2 2 3 4
+wasted or depth or miss: 2 2 3 4
+miss or depth or wasted: 2 2 3 4
+
+osborne and olympians: 4 1
+olympians and osborne: 4 1
+osborne olympians: 4 1
+olympians osborne: 4 1
+
+preferred or mid grow: 3 1 4 1 
+mid grow or preferred: 3 1 4 1 

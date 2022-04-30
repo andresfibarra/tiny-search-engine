@@ -1,0 +1,183 @@
+bash -v testing.sh 
+#!/bin/bash
+# Testing script for querier
+# Run in make test as bash -v testing.sh
+#
+# Assumes the existence of wikipedia1 and indexWikipedia1 in the 
+#   ../data/ directory
+# Andres Ibarra, Winter 2022
+
+
+########### INVALID ARGUMENTS ############
+# No arguments
+./querier 
+./querier: usage: ./querier pageDirectory indexFilename
+
+# One argument 
+./querier ../data/wikipedia1 
+./querier: usage: ./querier pageDirectory indexFilename
+
+# Three or more arguments 
+./querier ../data/wikipedia1 ../data/indexWikipedia1 extraArg
+./querier: usage: ./querier pageDirectory indexFilename
+
+# invalid pageDirectory (non-existent path) 
+./querier ../data/fakeDir ../data/indexWikipedia1
+./querier: ../data/fakeDir not a directory created by crawler
+
+# invalid pageDirectory (not a crawler directory)
+./querier ../data/notCrawlerDir ../data/indexWikipedia1
+./querier: ../data/notCrawlerDir not a directory created by crawler
+
+########### VALID ARGUMENTS ############
+# Invalid queries (should only print out error messages)
+./querier ../data/wikipedia1 ../data/indexWikipedia1 < ./queryTest/invalidQueries
+Error: 'and' cannot be first
+Error: 'or' cannot be first
+Error: 'and' cannot be first
+Error: 'and' cannot be first
+Error: 'or' cannot be first
+Error: 'and' cannot be last
+Error: 'or' cannot be last
+Error: 'and' and 'or' cannot be adjacent
+Error: 'or' and 'and' cannot be adjacent
+Error: Bad character in query
+Error: Bad character in query
+Error: Bad character in query
+
+# Blank query (shouldn't print anything)
+./querier ../data/wikipedia1 ../data/indexWikipedia1 < ./queryTest/blankQuery
+
+# Queries that shouldn't match anything
+./querier ../data/wikipedia1 ../data/indexWikipedia1 < ./queryTest/queriesNotMatching
+Query: thisshouldntmatchanything 
+No documents match
+Query: impractical and eberhart 
+No documents match
+Query: thisshouldntmatch or aboutcs say 
+No documents match
+
+# simgle queries
+./querier ../data/wikipedia1 ../data/indexWikipedia1 < ./queryTest/singleQueries
+Query: bgu 
+Matches 1 documents
+score 1 doc 7: http://cs50tse.cs.dartmouth.edu/tse/wikipedia/./Computer_science.html
+Query: mid 
+Matches 2 documents
+score 1 doc 4: http://cs50tse.cs.dartmouth.edu/tse/wikipedia/./Dartmouth_College.html
+score 1 doc 5: http://cs50tse.cs.dartmouth.edu/tse/wikipedia/./Unix.html
+Query: wikipedia 
+Matches 7 documents
+score 13 doc 2: http://cs50tse.cs.dartmouth.edu/tse/wikipedia/./Linked_list.html
+score 13 doc 7: http://cs50tse.cs.dartmouth.edu/tse/wikipedia/./Computer_science.html
+score 12 doc 6: http://cs50tse.cs.dartmouth.edu/tse/wikipedia/./C_(programming_language).html
+score 11 doc 3: http://cs50tse.cs.dartmouth.edu/tse/wikipedia/./Hash_table.html
+score 11 doc 4: http://cs50tse.cs.dartmouth.edu/tse/wikipedia/./Dartmouth_College.html
+score 11 doc 5: http://cs50tse.cs.dartmouth.edu/tse/wikipedia/./Unix.html
+score 6 doc 1: http://cs50tse.cs.dartmouth.edu/tse/wikipedia/
+Query: effects 
+Matches 3 documents
+score 2 doc 6: http://cs50tse.cs.dartmouth.edu/tse/wikipedia/./C_(programming_language).html
+score 1 doc 3: http://cs50tse.cs.dartmouth.edu/tse/wikipedia/./Hash_table.html
+score 1 doc 7: http://cs50tse.cs.dartmouth.edu/tse/wikipedia/./Computer_science.html
+Query: depth 
+Matches 1 documents
+score 1 doc 2: http://cs50tse.cs.dartmouth.edu/tse/wikipedia/./Linked_list.html
+
+# two queryWord queries, explicit or implicit and
+./querier ../data/wikipedia1 ../data/indexWikipedia1 < ./queryTest/andQueries
+Query: bgu and aboutcs 
+Matches 1 documents
+score 1 doc 7: http://cs50tse.cs.dartmouth.edu/tse/wikipedia/./Computer_science.html
+Query: preferred nir 
+Matches 1 documents
+score 1 doc 3: http://cs50tse.cs.dartmouth.edu/tse/wikipedia/./Hash_table.html
+Query: wikipedia and miss 
+Matches 1 documents
+score 1 doc 3: http://cs50tse.cs.dartmouth.edu/tse/wikipedia/./Hash_table.html
+
+# two queryWord querier, explicit or
+./querier ../data/wikipedia1 ../data/indexWikipedia1 < ./queryTest/orQueries
+Query: bgu or aboutcs 
+Matches 1 documents
+score 2 doc 7: http://cs50tse.cs.dartmouth.edu/tse/wikipedia/./Computer_science.html
+Query: preferred or nir 
+Matches 2 documents
+score 2 doc 3: http://cs50tse.cs.dartmouth.edu/tse/wikipedia/./Hash_table.html
+score 1 doc 4: http://cs50tse.cs.dartmouth.edu/tse/wikipedia/./Dartmouth_College.html
+Query: nothingshouldmatchthis or mid 
+Matches 2 documents
+score 1 doc 4: http://cs50tse.cs.dartmouth.edu/tse/wikipedia/./Dartmouth_College.html
+score 1 doc 5: http://cs50tse.cs.dartmouth.edu/tse/wikipedia/./Unix.html
+
+# Longer queries
+valgrind --leak-check=full --show-leak-kinds=all ./querier ../data/wikipedia1 ../data/indexWikipedia1 < ./queryTest/longerQueries
+==36711== Memcheck, a memory error detector
+==36711== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
+==36711== Using Valgrind-3.13.0 and LibVEX; rerun with -h for copyright info
+==36711== Command: ./querier ../data/wikipedia1 ../data/indexWikipedia1
+==36711== 
+Query: applicants or wikipedia and eberhart pro 
+Matches 1 documents
+score 2 doc 4: http://cs50tse.cs.dartmouth.edu/tse/wikipedia/./Dartmouth_College.html
+Query: grow or miss or effects or wasted depth 
+Matches 4 documents
+score 3 doc 3: http://cs50tse.cs.dartmouth.edu/tse/wikipedia/./Hash_table.html
+score 2 doc 6: http://cs50tse.cs.dartmouth.edu/tse/wikipedia/./C_(programming_language).html
+score 1 doc 7: http://cs50tse.cs.dartmouth.edu/tse/wikipedia/./Computer_science.html
+score 1 doc 2: http://cs50tse.cs.dartmouth.edu/tse/wikipedia/./Linked_list.html
+Query: thanasis osbourne and mint or effects 
+Matches 3 documents
+score 2 doc 6: http://cs50tse.cs.dartmouth.edu/tse/wikipedia/./C_(programming_language).html
+score 1 doc 3: http://cs50tse.cs.dartmouth.edu/tse/wikipedia/./Hash_table.html
+score 1 doc 7: http://cs50tse.cs.dartmouth.edu/tse/wikipedia/./Computer_science.html
+==36711== 
+==36711== HEAP SUMMARY:
+==36711==     in use at exit: 0 bytes in 0 blocks
+==36711==   total heap usage: 51,680 allocs, 51,680 frees, 1,297,485 bytes allocated
+==36711== 
+==36711== All heap blocks were freed -- no leaks are possible
+==36711== 
+==36711== For counts of detected and suppressed errors, rerun with: -v
+==36711== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
+
+# Equivalent queries
+./querier ../data/wikipedia1 ../data/indexWikipedia1 < ./queryTest/equivalentQueries
+Query: applicants or pro 
+Matches 1 documents
+score 2 doc 4: http://cs50tse.cs.dartmouth.edu/tse/wikipedia/./Dartmouth_College.html
+Query: pro or applicants 
+Matches 1 documents
+score 2 doc 4: http://cs50tse.cs.dartmouth.edu/tse/wikipedia/./Dartmouth_College.html
+Query: depth or wasted or miss 
+Matches 2 documents
+score 4 doc 3: http://cs50tse.cs.dartmouth.edu/tse/wikipedia/./Hash_table.html
+score 2 doc 2: http://cs50tse.cs.dartmouth.edu/tse/wikipedia/./Linked_list.html
+Query: wasted or depth or miss 
+Matches 2 documents
+score 4 doc 3: http://cs50tse.cs.dartmouth.edu/tse/wikipedia/./Hash_table.html
+score 2 doc 2: http://cs50tse.cs.dartmouth.edu/tse/wikipedia/./Linked_list.html
+Query: miss or depth or wasted 
+Matches 2 documents
+score 4 doc 3: http://cs50tse.cs.dartmouth.edu/tse/wikipedia/./Hash_table.html
+score 2 doc 2: http://cs50tse.cs.dartmouth.edu/tse/wikipedia/./Linked_list.html
+Query: osborne and olympians 
+Matches 1 documents
+score 1 doc 4: http://cs50tse.cs.dartmouth.edu/tse/wikipedia/./Dartmouth_College.html
+Query: olympians and osborne 
+Matches 1 documents
+score 1 doc 4: http://cs50tse.cs.dartmouth.edu/tse/wikipedia/./Dartmouth_College.html
+Query: osborne olympians 
+Matches 1 documents
+score 1 doc 4: http://cs50tse.cs.dartmouth.edu/tse/wikipedia/./Dartmouth_College.html
+Query: olympians osborne 
+Matches 1 documents
+score 1 doc 4: http://cs50tse.cs.dartmouth.edu/tse/wikipedia/./Dartmouth_College.html
+Query: preferred or mid grow 
+Matches 2 documents
+score 1 doc 3: http://cs50tse.cs.dartmouth.edu/tse/wikipedia/./Hash_table.html
+score 1 doc 4: http://cs50tse.cs.dartmouth.edu/tse/wikipedia/./Dartmouth_College.html
+Query: mid grow or preferred 
+Matches 2 documents
+score 1 doc 3: http://cs50tse.cs.dartmouth.edu/tse/wikipedia/./Hash_table.html
+score 1 doc 4: http://cs50tse.cs.dartmouth.edu/tse/wikipedia/./Dartmouth_College.html
